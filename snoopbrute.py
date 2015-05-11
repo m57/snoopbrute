@@ -54,22 +54,30 @@ def dns_cache_lookup(host, target_ns, x):
 		res = dns.query.tcp(q, target_ns)
 	except:
 		#connection refused?
-		#print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m\n" % (target_ns, host)
-		return
+		print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m\n" % (target_ns, host)
+		dns_cache_lookup(host, target_ns, x)
 
 	if len(res.answer) > 0:
 		if '\x0a' in str(res.answer[0]):
 			list = str(res.answer[0]).split("\n")
 			for item in list:
-				host_id = str(item.strip()).split("A")[1].strip()
+				host_list = str(item.strip()).split(" ")
+				host_id = host_list[len(host_list)-1]
 				resolved.append(host_id)
 				print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
 		else:
-			host_id = str(res.answer[0]).strip().split("A")[1].strip()
+			host_list = str(res.answer[0]).strip().split(" ")
+			host_id = host_list[len(host_list)-1]
+
 			resolved.append(host_id)
 			print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
 	else:
 		return
+
+	if not "www." in host:
+		dns_cache_lookup("www." + host, target_ns, x)
+
+
 	return
 
 def parse_host_file(file):
