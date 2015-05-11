@@ -9,13 +9,14 @@ import sys
 import re
 import time
 import commands
+import dns.resolver
 from threading import Thread
 
 hosts = []
 threads = []
 num_threads = 5
 target_dns = ""
-VERSION = "1.0"
+VERSION = "1.1"
 
 def help():
 	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)] [threads (Optional, default: 3)] " % sys.argv[0]
@@ -31,34 +32,44 @@ def valid_ip(ip):
 
 def banner():
 
-	print '   ___    _  _     ___     ___      ___    ___     ___     ___     ___    _____  '
+	print '\033[1;37m   ___    _  _     ___     ___      ___    ___     ___     ___     ___    _____  '
 	print '  / __|  | \| |   / _ \   / _ \    | _ \  | _ )   | _ \   / _ \   / _ \  |_   _| '
 	print '  \__ \  | .` |  | (_) | | (_) |   |  _/  | _ \   |   /  | (_) | | (_) |   | |   '
 	print '  |___/  |_|\_|   \___/   \___/   _|_|_   |___/   |_|_\   \___/   \___/   _|_|_  '
 	print '_|"""""|_|"""""|_|"""""|_|"""""|_| """ |_|"""""|_|"""""|_|"""""|_|"""""|_|"""""| '
-	print '`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\' '
+	print '`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\'"`-0-0-\' \033[0m'
+	print "\t\t\t\t\t\t\t\t\tv. %s" % VERSION
 	print "_________________________________________________________________________________"
-	print "\t\t\t\t\t\t\t\tv. %s @_x90__" % VERSION
+	print "\t\t\t\t\t\t\t\t\t\033[1;32m@_x90__\033[0m"
 
 def dns_cache_lookup(host, target_ns, x):
 
 	resolved = []
-	cmd = "dig +short +norecurse %s @%s" % (host.strip(), target_ns.strip())
-#	print "thread: %d -> %s" % (x, cmd)
-	out = commands.getstatusoutput(cmd)[1]
-#	print out
-	if "\n" in out:
-		for i in out.split("\n"):
-			resolved.append(i.strip())
+	host=host.strip()
 
-		for i2 in resolved:
-			if (valid_ip(i2.strip())):
-				print "[Thread id: %d] Host identified: %s:%s" % (x, host[:-1], i2) 
+	q = dns.message.make_query(host, "A")	# create bespoke dns message so we can alter query flags below...
+	q.flags &= ~dns.flags.RD		# UNSET RECURSION FLAG
 
+	try:
+		res = dns.query.tcp(q, target_ns)
+	except e:
+		#connection refused?
+		print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m" % (target_ns, host)
+		return
+
+	if len(res.answer) > 0:
+		if '\x0a' in str(res.answer[0]):
+			list = str(res.answer[0]).split("\n")
+			for item in list:
+				host_id = str(item).split("A")[1].strip()
+				resolved.append(host_id)
+				print "[Thread id: %d] Host identified: %s:%s" % (x, host, host_id)
+		else:
+			host_id = str(res.answer[0]).split("A")[1].strip()
+			resolved.append(host_id)
+			print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
 	else:
-		if (valid_ip(out)):
-			print "[Thread id: %d] Host identified: %s:%s" % (x, host[:-1], out)
-
+		return
 	return
 
 def parse_host_file(file):
