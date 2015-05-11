@@ -16,7 +16,7 @@ hosts = []
 threads = []
 num_threads = 5
 target_dns = ""
-VERSION = "1.1"
+VERSION = "1.1.1"
 
 def help():
 	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)] [threads (Optional, default: 3)] " % sys.argv[0]
@@ -52,7 +52,7 @@ def dns_cache_lookup(host, target_ns, x):
 
 	try:
 		res = dns.query.tcp(q, target_ns)
-	except e:
+	except:
 		#connection refused?
 		print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m" % (target_ns, host)
 		return
