@@ -16,7 +16,7 @@ hosts = []
 threads = []
 num_threads = 5
 target_dns = ""
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 def help():
 	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)] [threads (Optional, default: 3)] " % sys.argv[0]
