@@ -19,7 +19,7 @@ target_dns = ""
 VERSION = "1.1.3"
 
 def help():
-	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)] [threads (Optional, default: 3)] " % sys.argv[0]
+	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)]" % sys.argv[0]
 	sys.exit()
 
 def valid_ip(ip):
