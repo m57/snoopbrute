@@ -4,21 +4,21 @@
 #
 ##########################
 
-import commands
+import os
 import sys
 import re
-from threading import Thread
 import time
+import commands
+from threading import Thread
 
-arg = 0
 hosts = []
 threads = []
-num_threads = 3
+num_threads = 5
 target_dns = ""
 VERSION = "1.0"
 
 def help():
-	print "Usage: %s [target_DNS] [host file.txt] [threads (Optional, default: 3)] " % sys.argv[0]
+	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)] [threads (Optional, default: 3)] " % sys.argv[0]
 	sys.exit()
 
 def valid_ip(ip):
@@ -49,11 +49,11 @@ def dns_cache_lookup(host, target_ns, x):
 #	print out
 	if "\n" in out:
 		for i in out.split("\n"):
-			resolved.append(i.strip())	
-	
-		for i2 in resolved:	
+			resolved.append(i.strip())
+
+		for i2 in resolved:
 			if (valid_ip(i2.strip())):
-				print "[Thread id: %d] Host identified: %s:%s" % (x, host[:-1], i2) 	
+				print "[Thread id: %d] Host identified: %s:%s" % (x, host[:-1], i2) 
 
 	else:
 		if (valid_ip(out)):
@@ -64,6 +64,7 @@ def dns_cache_lookup(host, target_ns, x):
 def parse_host_file(file):
 
 	print "Buffering input host file: %s" % file
+
 	with open(file, "r") as f:
 		for i in f:
 			try:
@@ -99,22 +100,30 @@ def start_cache_snoop():
 
 if __name__ == "__main__":
 
-	if len(sys.argv) == 4:
-		num_threads = int(sys.argv[3])
-		arg = 4	
-	else:
-		arg = 3
+	path = os.getcwd() + "/"
 
-	if len(sys.argv) < arg:
+	if (len(sys.argv) == 2):
+		target_dns = sys.argv[1]
+		if (os.path.isfile(path + "domain_wordlist.txt")):
+			parse_host_file("domain_wordlist.txt")
+		else:
+			help()
+			print "[!] Cannot find ./domain_wordlist.txt, either git clone https://github.com/m57/snoopbrute again or supply a wordlist!\n"
+
+	elif (len(sys.argv) == 3):
+		target_dns = sys.argv[1]
+		if (os.path.isfile(path + sys.argv[2])):
+			parse_host_file(sys.argv[2])
+		else:
+			help()
+			print "[!] Cannot find ./domain_wordlist.txt, either git clone https://github.com/m57/snoopbrute again or supply a wordlist!\n"
+	else:
 		help()
 
 	banner()
 
 	print "Starting..."
 
-		
-	target_dns = sys.argv[1]
-	parse_host_file(sys.argv[2])
 
 	print "Executing non-recursive queries with %d threads\nTarget >>> %s\n" % (num_threads, target_dns)
 	start_cache_snoop()
