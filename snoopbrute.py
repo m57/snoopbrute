@@ -16,7 +16,7 @@ hosts = []
 threads = []
 num_threads = 5
 target_dns = ""
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 def help():
 	print "Usage: %s [target_DNS] [wordlist (Optional, default: domain_wordlist.txt)] [threads (Optional, default: 3)] " % sys.argv[0]
@@ -45,7 +45,7 @@ def banner():
 def dns_cache_lookup(host, target_ns, x):
 
 	resolved = []
-	host=host.strip()
+	host=host.strip().lower()
 
 	q = dns.message.make_query(host, "A")	# create bespoke dns message so we can alter query flags below...
 	q.flags &= ~dns.flags.RD		# UNSET RECURSION FLAG
@@ -54,18 +54,18 @@ def dns_cache_lookup(host, target_ns, x):
 		res = dns.query.tcp(q, target_ns)
 	except:
 		#connection refused?
-		print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m" % (target_ns, host)
+		#print "\033[1;31m[!] Connection refused by %s when looking up %s\033[0m\n" % (target_ns, host)
 		return
 
 	if len(res.answer) > 0:
 		if '\x0a' in str(res.answer[0]):
 			list = str(res.answer[0]).split("\n")
 			for item in list:
-				host_id = str(item).split("A")[1].strip()
+				host_id = str(item.strip()).split("A")[1].strip()
 				resolved.append(host_id)
-				print "[Thread id: %d] Host identified: %s:%s" % (x, host, host_id)
+				print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
 		else:
-			host_id = str(res.answer[0]).split("A")[1].strip()
+			host_id = str(res.answer[0]).strip().split("A")[1].strip()
 			resolved.append(host_id)
 			print "\033[1;32m[Thread id: %d] Host identified: %s:%s\033[0m" % (x, host, host_id)
 	else:
